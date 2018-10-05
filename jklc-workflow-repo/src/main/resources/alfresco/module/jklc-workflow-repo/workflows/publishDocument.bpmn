@@ -1,0 +1,266 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+    xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:activiti="http://activiti.org/bpmn" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+    xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC" xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+	typeLanguage="http://www.w3.org/2001/XMLSchema" expressionLanguage="http://www.w3.org/1999/XPath"
+	targetNamespace="http://www.activiti.org/test">
+    <process id="docApproveReject" name="Document Approval" isExecutable="true">
+        <startEvent id="startevent1" name="Start" activiti:formKey="scwf:submitReviewTask"></startEvent>
+        <sequenceFlow id="flow1" sourceRef="startevent1" targetRef="initialscript"></sequenceFlow>
+        <serviceTask id="initialscript" name="Submit" activiti:class="org.alfresco.repo.workflow.activiti.script.AlfrescoScriptDelegate">
+            <extensionElements>
+                <activiti:field name="runAs">
+                    <activiti:string>
+                        <![CDATA[admin]]>
+                    </activiti:string>
+                </activiti:field>
+                <activiti:field name="script">
+                    <activiti:string><![CDATA[
+					   execution.setVariable("scwf_usersComment","");
+					   execution.setVariable("userAssignNo",1);
+             		   var currDoc=bpm_package.children[0];
+             		   execution.setVariable("previousUserComment","");
+
+             		   
+             		    execution.setVariable("step",1);
+             			logger.log("Initiator:"  + initiator.properties.firstName + " "+initiator.properties.lastName);
+             			
+             			execution.setVariable("previousApprover","");
+             			execution.setVariable("previousUser","");
+             			execution.setVariable("originator",initiator.properties.firstName + " "+initiator.properties.lastName);
+             			
+             			logger.log("Permission:" + currDoc.getPermissions());
+             			
+             			logger.log("Document Name:"+currDoc.getName());
+             			logger.log("Document Owner:"+currDoc.getOwner());
+             			
+             			execution.setVariable("ownerName",currDoc.getOwner());
+             			currDoc.setInheritsPermissions(false);
+             			
+              			var parent=currDoc.getParent();
+              			logger.log("Folder Name :"+parent.name);
+              			
+              			var folderUsers = [];
+              			
+              			if(parent.hasAspect("scwf:userSelect")){
+							var userNames= parent.properties["scwf:userName"];
+							var userList=userNames.split(",");
+							var cnt=0;
+							for(i in userList)
+							{
+								cnt++;
+								var user = {};
+								user["srNo"]=cnt;
+								user["name"]=userList[i];
+								folderUsers.push(user);
+							}
+							execution.setVariable("startWorkFlow",1);
+							execution.setVariable("userList",JSON.stringify(folderUsers));
+						}else{
+							execution.setVariable("startWorkFlow",0);
+						}
+              
+         			 ]]>
+                    </activiti:string>
+                </activiti:field>
+            </extensionElements>
+        </serviceTask>
+        <sequenceFlow id="flow2" sourceRef="initialscript" targetRef="scripttask1">
+            <conditionExpression xsi:type="tFormalExpression"><![CDATA[${startWorkFlow == 1}]]></conditionExpression>
+        </sequenceFlow>
+        <sequenceFlow id="flow3" sourceRef="initialscript" targetRef="scripttask2">
+            <conditionExpression xsi:type="tFormalExpression"><![CDATA[${startWorkFlow == 0}]]></conditionExpression>
+        </sequenceFlow>
+        <serviceTask id="scripttask1" name="Submit" activiti:class="org.alfresco.repo.workflow.activiti.script.AlfrescoScriptDelegate">
+            <extensionElements>
+                <activiti:field name="runAs">
+                    <activiti:string>
+                        <![CDATA[admin]]>
+                    </activiti:string>
+                </activiti:field>
+                <activiti:field name="script">
+                    <activiti:string>
+                        <![CDATA[
+							execution.setVariable("nextUser",0);
+							var userList=execution.getVariable("userList");
+							userList=JSON.parse(userList);
+							var userNo = execution.getVariable("userAssignNo");
+							var userName="";
+							for (var i = 0; i < userList.length; i++){
+								  if (userList[i].srNo == userNo){
+								    userName=userList[i].name;
+								    break;
+								  }
+							}
+          			]]>
+          if(userName!=""){
+          	execution.setVariable("userAssignName",userName);
+          	execution.setVariable("userAssignNo",parseInt(userNo)+1);
+			execution.setVariable("nextUser",1);
+			var currDoc=bpm_package.children[0];
+			var userProp=people.getPerson(userName);
+            currDoc.setInheritsPermissions(false);
+			currDoc.setOwner("admin");
+			currDoc.setPermission("Read", userName); 
+          }
+           logger.log("Assignee:"+userName);
+           logger.log("isNextUser:"+ execution.getVariable("nextUser"));
+          
+                    </activiti:string>
+                </activiti:field>
+            </extensionElements>
+        </serviceTask>
+        <sequenceFlow id="flow4" sourceRef="scripttask1" targetRef="usertask1">
+            <conditionExpression xsi:type="tFormalExpression"><![CDATA[${nextUser == 1}]]></conditionExpression>
+        </sequenceFlow>
+        <sequenceFlow id="flow5" sourceRef="scripttask1" targetRef="scripttask2">
+            <conditionExpression xsi:type="tFormalExpression"><![CDATA[${nextUser == 0}]]></conditionExpression>
+        </sequenceFlow>
+        <userTask id="usertask1" name="User Review" activiti:assignee="${userAssignName}" activiti:formKey="scwf:activitiReviewTask">
+            <extensionElements>
+                <activiti:taskListener event="create" class="org.alfresco.repo.workflow.activiti.tasklistener.ScriptTaskListener">
+                    <activiti:field name="runAs">
+                        <activiti:string><![CDATA[admin]]></activiti:string>
+                    </activiti:field>
+                    <activiti:field name="script">
+                        <activiti:string> 
+                        
+                       var currDoc=bpm_package.children[0];
+                       var nodeRefd=currDoc.nodeRef;
+			       		logger.log("------ts----" + nodeRefd);
+			       
+                        if(execution.getVariable("step")>1){
+                        	if(execution.getVariable("previousUser")!=""){
+                        		var userNameTemp=execution.getVariable("previousUser");
+			      			 	var userPropTemp=people.getPerson(userNameTemp);
+                        		task.description = "Document  \"" + currDoc.getName() + "\" has been submitted for your approval by "+ userPropTemp.properties.firstName + " " +userPropTemp.properties.lastName;
+                        	}
+                        }
+                        
+						logger.log("user task create event");
+			       		 var userName=execution.getVariable("userAssignName");
+			      		 var userProp=people.getPerson(userName);
+			      		
+			      		 var mail = actions.create("mail");
+			       		 logger.log("Email : " + userProp.properties.email);
+			             mail.parameters.to = userProp.properties.email;
+			             mail.parameters.subject = "WF Approval Request For " + currDoc.getName();
+			              
+			             var templateArgs = new Array();
+			             templateArgs['docName'] =currDoc.getName();
+			             templateArgs['docPath'] =currDoc.displayPath;
+			             templateArgs['workflowId'] = task.getId();
+			             templateArgs['originator'] =execution.getVariable("originator")!=null?execution.getVariable("originator"):"";
+			             templateArgs['noderef'] = nodeRefd.toString();
+			             
+			             templateArgs['previousApprover'] =execution.getVariable("previousApprover")!=null?execution.getVariable("previousApprover"):"";
+			             templateArgs['previousUserComment'] =execution.getVariable("previousUserComment")!=null?execution.getVariable("previousUserComment"):"";
+			             logger.log("STEP:"+ execution.getVariable("step"));
+			             templateArgs['step'] =execution.getVariable("step");
+			             
+			             mail.parameters.template = companyhome.childByNamePath("Data Dictionary/EMail Templates/EisenVault_Email_Templates/dynamic-workflow-notification-email.html.ftl");
+			            
+			             var templateModel = new Array();
+			             templateModel['args'] = templateArgs;
+			             mail.parameters.template_model = templateModel;    
+			             mail.executeAsynchronously(bpm_package);
+             
+						</activiti:string>
+                    </activiti:field>
+                </activiti:taskListener>
+                <activiti:taskListener event="complete" class="org.alfresco.repo.workflow.activiti.tasklistener.ScriptTaskListener">
+                    <activiti:field name="runAs">
+                        <activiti:string><![CDATA[admin]]></activiti:string>
+                    </activiti:field>
+                    <activiti:field name="script">
+                        <activiti:string>    
+						execution.setVariable("approve",0);
+						var userName=execution.getVariable("userAssignName");
+						var comment=task.getVariableLocal("scwf_comment");
+                        logger.log("Current Comment : " + comment);
+						execution.setVariable("previousUser",userName);
+						if(task.getVariableLocal('scwf_approveRejectOutcome') == 'Approve'){
+							execution.setVariable("approve",1);	
+						 }
+							
+						var userProp=people.getPerson(userName);
+						execution.setVariable("step",parseInt(execution.getVariable("step"))+1);
+                       	execution.setVariable("previousApprover",userProp.properties.firstName +" "+userProp.properties.lastName);
+                       	logger.log("previousApprover:" + userProp.properties.firstName +" "+userProp.properties.lastName);
+						execution.setVariable("previousUserComment",comment);
+                             
+                        if(comment!=""){
+                            comment= userName +":"+comment +"\n";
+                        }
+                       
+                        bpm_package.children[0].removePermission("Read", userName);
+                        execution.setVariable("scwf_usersComment",execution.getVariable("scwf_usersComment") + comment );
+                        
+                    </activiti:string>
+                    </activiti:field>
+                </activiti:taskListener>
+            </extensionElements>
+        </userTask>
+        <sequenceFlow id="flow6" sourceRef="usertask1" 	targetRef="scripttask1">
+            <conditionExpression xsi:type="tFormalExpression"><![CDATA[${approve == 1}]]></conditionExpression>
+        </sequenceFlow>
+        <sequenceFlow id="flow7" sourceRef="usertask1" targetRef="scripttask2">
+            <conditionExpression xsi:type="tFormalExpression"><![CDATA[${approve == 0}]]></conditionExpression>
+        </sequenceFlow>
+        <serviceTask id="scripttask2" name="Submit" activiti:class="org.alfresco.repo.workflow.activiti.script.AlfrescoScriptDelegate">
+            <extensionElements>
+                <activiti:field name="runAs">
+                    <activiti:string>
+                        <![CDATA[admin]]>
+                    </activiti:string>
+                </activiti:field>
+                <activiti:field name="script">
+                    <activiti:string>
+                        <![CDATA[ 
+					
+					 var userName=execution.getVariable("ownerName");
+       				 var userProp=people.getPerson(userName);
+      				 var currDoc=bpm_package.children[0];
+       
+      				 var mail = actions.create("mail");
+       		         logger.log("Email : " + userProp.properties.email);
+             		 mail.parameters.to = userProp.properties.email;
+            		 mail.parameters.subject = "WF Approval Request For " + currDoc.getName();
+              
+            		 var templateArgs = new Array();
+                     templateArgs['docName'] =currDoc.getName();
+                      templateArgs['docPath'] =currDoc.displayPath;
+                     templateArgs['originator'] =execution.getVariable("originator")!=null?execution.getVariable("originator"):"";
+             
+                     templateArgs['previousApprover'] =execution.getVariable("previousApprover")!=null?execution.getVariable("previousApprover"):"";
+                     templateArgs['previousUserComment'] =execution.getVariable("previousUserComment")!=null?execution.getVariable("previousUserComment"):"";
+                   
+					var currDoc=bpm_package.children[0];
+					logger.log("Approve Or Reject:"+execution.getVariable("approve"));
+					if(execution.getVariable("approve")==1){
+						currDoc.setInheritsPermissions(true);
+						currDoc.setOwner(execution.getVariable("ownerName"));
+						currDoc.addAspect("scwf:approveDocument");
+						templateArgs['step'] ="approve";
+					}else{
+						currDoc.setOwner(execution.getVariable("ownerName"));
+						currDoc.addAspect("scwf:rejectDocument");
+						templateArgs['step'] ="reject";
+					}
+
+					 var templateModel = new Array();
+                     templateModel['args'] = templateArgs;
+                     mail.parameters.template_model = templateModel;
+					 mail.parameters.template = companyhome.childByNamePath("Data Dictionary/EMail Templates/EisenVault_Email_Templates/dynamic-workflow-approve-reject-email.html.ftl");
+                     mail.executeAsynchronously(bpm_package);
+					
+					]]>
+                    </activiti:string>
+                </activiti:field>
+            </extensionElements>
+        </serviceTask>
+        <sequenceFlow id="flow8" sourceRef="scripttask2" targetRef="endTask"></sequenceFlow>
+        <endEvent id="endTask" name="End"></endEvent>
+    </process>
+</definitions>

@@ -1,0 +1,7 @@
+<webscript>
+    <shortname>Get Rejected Document List</shortname>
+    <description>Get Rejected Document List</description>
+    <url>/jklc/rejecteddocument</url>
+    <authentication>user</authentication>
+     <format default="json">argument</format>
+</webscript>

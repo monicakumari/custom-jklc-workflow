@@ -1,0 +1,6 @@
+<webscript>
+    <shortname>Get Folder User</shortname>
+    <description>Get Folder User</description>
+    <url>/user/folderuser</url>
+    <authentication runas="user">user</authentication>
+</webscript>

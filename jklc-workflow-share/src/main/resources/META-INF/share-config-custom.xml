@@ -1,0 +1,112 @@
+<alfresco-config>
+
+   <config evaluator="string-compare" condition="DocumentLibrary">
+		<indicators>
+			<indicator id="approveDocument" icon="published-16.png" index="100" label="Approved">
+				<evaluator>evaluator.custom.isDocumentApproved</evaluator>
+			</indicator>
+			<indicator id="rejectDocument" icon="rejected-16.png" index="100" label="Rejected">
+				<evaluator>evaluator.custom.isDocumentRejected</evaluator>
+			</indicator>
+		</indicators>
+	</config>
+
+	<!-- Custom Action Start -->
+	<config evaluator="string-compare" condition="DocLibActions">
+		<actions>
+			<action id="alfresco.doclib.action.WorkflowUserActionExecuter" icon="workflow"
+				type="javascript" label="alfresco.doclib.action.WorkflowUserActionExecuter.label">
+				<param name="function">onActionFormDialog</param>
+				<param name="itemKind">action</param>
+				<param name="itemId">WorkflowUserActionExecuter</param> <!-- Repository action id = Spring Bean id -->
+				<param name="mode">create</param>
+				<param name="destination">{node.nodeRef}</param>
+				<param name="successMessage">alfresco.doclib.action.WorkflowUserActionExecuter.msg.success</param>
+				<param name="failureMessage">alfresco.doclib.action.WorkflowUserActionExecuter.msg.failure</param>
+				<!-- <evaluator>jkl.evaluator.doclib.action.jklDocumentManagers</evaluator> -->
+				<!-- <evaluator>jkl.evaluator.doclib.action.customEval</evaluator> -->
+			</action>
+		</actions>
+		<actionGroups>
+			<actionGroup id="folder-browse">
+				<action index="400" id="alfresco.doclib.action.WorkflowUserActionExecuter" />
+			</actionGroup>
+			<actionGroup id="folder-details">
+				<action index="400"	id="alfresco.doclib.action.WorkflowUserActionExecuter" />
+			</actionGroup>
+		</actionGroups>
+	</config>
+	<!-- Custom Action End -->
+
+
+	<config evaluator="string-compare" condition="DocLibCustom">
+		<dependencies>
+			<js src="components/object-finder/object-finder_custom.js" />
+		</dependencies>
+	</config>
+	
+	<config evaluator="string-compare" condition="WorkflowUserActionExecuter">
+		<forms>
+			<form>
+				<field-visibility>
+					<show id="selectedUser" />
+					<show id="applySubfolders" />
+				</field-visibility>
+				<appearance>
+					<field id="selectedUser" label-id="alfresco.doclib.action.WorkflowUserActionExecuter.form.field.user">
+						<control template="/org/alfresco/components/form/controls/authority_custom.ftl" />
+					</field>
+					<field id="applySubfolders" label-id="alfresco.doclib.action.WorkflowUserActionExecuter.form.field.apply">
+						<control template="/org/alfresco/components/form/controls/checkbox.ftl" />
+					</field>
+				</appearance>
+			</form>
+		</forms>
+	</config>
+	
+	
+	<config evaluator="task-type" condition="scwf:activitiReviewTask">
+
+		<forms>
+			<form>
+				<field-visibility>
+					<show id="packageItems" />
+					<show id="scwf:usersComment" />
+					<show id="scwf:comment" />
+					<show id="scwf:approveRejectOutcome" />
+
+				</field-visibility>
+				<appearance>
+					<set id="items" appearance="title" label-id="workflow.set.items" />
+					<set id="other" appearance="title" label-id="workflow.set.other" />
+
+					<field id="packageItems" set="items" />
+					<field id="scwf:usersComment" set="other" read-only="true">
+						<control template="/org/alfresco/components/form/controls/textarea.ftl" />
+					</field>
+					<field id="scwf:comment" set="other">
+						<control template="/org/alfresco/components/form/controls/textarea.ftl" />
+					</field>
+					<field id="scwf:approveRejectOutcome" set="other">
+						<control template="/org/alfresco/components/form/controls/workflow/activiti-transitions.ftl" />
+					</field>
+				</appearance>
+			</form>
+		</forms>
+	</config>
+
+
+	<config evaluator="aspect" condition="scwf:userSelect">
+		<forms>
+			<form>
+				<field-visibility>
+					<show id="scwf:userName" name="Users" />
+				</field-visibility>
+				<appearance>
+					<field id="scwf:userName" label-id="type.scwf_userName" />
+				</appearance>
+			</form>
+		</forms>
+	</config>
+
+</alfresco-config>

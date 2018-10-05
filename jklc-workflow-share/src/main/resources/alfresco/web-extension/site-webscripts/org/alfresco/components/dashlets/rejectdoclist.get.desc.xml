@@ -1,0 +1,6 @@
+<webscript>
+   <shortname>Rejected Documents</shortname>
+   <description>Rejected Documents</description>
+   <family>user-dashlet</family>
+   <url>/components/dashlets/reject-doclist</url>
+</webscript>

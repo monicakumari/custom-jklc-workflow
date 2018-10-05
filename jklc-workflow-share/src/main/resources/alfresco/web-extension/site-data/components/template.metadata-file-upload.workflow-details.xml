@@ -1,0 +1,6 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<component>
+	<scope>template</scope>
+	<region-id>metadata-file-upload</region-id>
+	<url>/components/upload/file-upload</url>
+</component>

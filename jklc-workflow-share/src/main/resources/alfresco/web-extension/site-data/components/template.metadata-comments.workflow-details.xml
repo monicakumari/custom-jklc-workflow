@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<component>
+	<scope>template</scope>
+	<region-id>metadata-comments</region-id>
+	<url>/components/comments/list</url>
+	<properties>
+		<nodeRef>{nodeRef}</nodeRef>
+		<activityType>document</activityType>
+	</properties>
+</component>

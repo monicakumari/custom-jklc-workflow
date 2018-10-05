@@ -1,0 +1,6 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<component>
+	<scope>template</scope>
+	<region-id>metadata-dns-upload</region-id>
+	<url>/components/upload/dnd-upload</url>
+</component>

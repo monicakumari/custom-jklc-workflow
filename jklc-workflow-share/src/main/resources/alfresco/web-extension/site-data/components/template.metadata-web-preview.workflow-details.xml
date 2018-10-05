@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<component>
+   <scope>template</scope>
+   <region-id>metadata-web-preview</region-id>
+   <url>/components/preview/web-preview</url>
+   <properties>
+      <nodeRef>{nodeRef}</nodeRef>
+      <api>api</api>
+      <proxy>alfresco</proxy>
+      <dependencyGroup>document-details</dependencyGroup>
+   </properties>
+</component>

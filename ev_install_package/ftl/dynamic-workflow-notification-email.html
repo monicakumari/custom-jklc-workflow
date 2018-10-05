@@ -1,0 +1,77 @@
+<html>
+   <head>
+   
+   </head>
+   
+   <body bgcolor="white">
+      <table width="100%" cellpadding="20" cellspacing="0" border="0" bgcolor="white">
+         <tr>
+            <td width="100%" align="center">
+               <table width="70%" cellpadding="0" cellspacing="0" bgcolor="white" style="background-color: white; border: 1px solid #aaaaaa;">
+                  <tr>
+                     <td width="100%">
+                        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                           <tr>
+                              <td style="padding: 10px 30px 0px;">
+                                 <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                                   
+                                         
+                                          <div style="font-size: 14px; margin: 12px 0px 24px 0px; padding-top: 10px; border-top: 1px solid #aaaaaa;">
+                                            <h1> <#if args.step == 1>
+                                                        Workflow Approval Notification
+                                                      <#else>
+                                                        Workflow Next Level Approval Request
+                                                      </#if>
+											
+											</h1>
+													
+													
+                                             <p>Dear Sir,<br> 
+											 <#if args.step == 1>
+                                                        Document "${args.docName}" has been submitted in DMS workflow queue for your approval, see more details below: 
+                                                      <#else>
+                                                       This is to inform you, document "${args.docName}" has been approved and move in your DMS workflow queue for next level approval. See more details below: 
+                                                      </#if>
+													  
+											
+											 <br>
+											 <br>
+											  <table border=1  cellpadding="0" cellspacing="0">
+												<tr>
+													<td>Document Folder Path</td><td>${args.docPath}</td>
+												</tr>
+												
+												
+												<tr>
+													<td>Originator</td><td>${args.originator}</td>
+												</tr>
+												 <#if args.step != 1>
+												<tr>
+													<td>Previous Approver</td><td>${args.previousApprover}</td>
+												</tr>
+												
+												<tr>
+													<td>Remarks</td><td>${args.previousUserComment}</td>
+												</tr>
+												 </#if>
+											  </table>
+											  <p>Please take necessary action in this regard. </p>
+												<p>Click this link to view the task:</p>
+												<p><a href="${shareUrl}/page/task-edit?taskId=activiti$${args.workflowId}&nodeRef=${args.noderef}" target="_blank">${shareUrl}/page/task-edit?taskId=activiti$${args.workflowId}&nodeRef=${args.noderef}</a>											  
+                                            
+                                          </div>
+                                      
+                                 </table>
+                              </td>
+                           </tr>
+                           
+                           
+                        </table>
+                     </td>
+                  </tr>
+               </table>
+            </td>
+         </tr>
+      </table>
+   </body>
+</html>

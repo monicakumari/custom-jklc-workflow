@@ -5,6 +5,7 @@ import org.alfresco.repo.node.NodeServicePolicies;
 import org.alfresco.repo.policy.Behaviour;
 import org.alfresco.repo.policy.JavaBehaviour;
 import org.alfresco.repo.policy.PolicyComponent;
+import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.policy.Behaviour.NotificationFrequency;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -41,10 +42,18 @@ public class ApplyAspectOnCreate implements NodeServicePolicies.OnCreateNodePoli
 		NodeRef parentNode = childAssocRef.getParentRef();
 		
 		QName USER_NAME = QName.createQName(WorkflowUserActionExecuter.CUSTOM_MODEL_URI, "userName");
-		
-		if(nodeService.hasAspect(parentNode, WorkflowUserActionExecuter.ASPECT_USER))
-		{
-			nodeService.setProperty(nodeRef, USER_NAME, nodeService.getProperty(parentNode, USER_NAME));
-		}
+	
+		AuthenticationUtil.runAsSystem(
+			       new AuthenticationUtil.RunAsWork<Object>() {
+
+			           public Object doWork() throws Exception {
+						   if(nodeService.exists(nodeRef)){
+							   if(nodeService.hasAspect(parentNode, WorkflowUserActionExecuter.ASPECT_USER)){
+								   nodeService.setProperty(nodeRef, USER_NAME, nodeService.getProperty(parentNode, USER_NAME));
+							   }
+						   }
+			               return null;
+			           }
+			       });
 	}
 }
